@@ -1,78 +1,65 @@
-import random
-import math
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+import time
 import warnings
-from scipy.integrate import quad
 
 warnings.filterwarnings("ignore")
 
-def monte_carlo_integration(f, a, b, n):
-    count = 0
-    x_in = []
-    y_in = []
-    x_out = []
-    y_out = []
-    for i in range(n):
-        x = random.uniform(a, b)
-        y = random.uniform(0, f(b))
-        if y <= f(x):
-            count += 1
-            x_in.append(x)
-            y_in.append(y)
-        else:
-            x_out.append(x)
-            y_out.append(y)
-    return (b - a) * f(b) * count / n, x_in, y_in, x_out, y_out
+n = 15
+N = 10 + n
 
-def test_function(x):
-    return np.exp(x)
+num_add = num_mult = N
 
-def main_function(x):
-    return np.exp(x**2)
-
-def errors(integral):
-    exact_value = quad(test_function, a, b)[0]
-    abs_error = abs(integral - exact_value)
-    rel_error = abs_error / exact_value
-    return exact_value, abs_error, rel_error
-
-a = 0
-b = 2
-n = 3000
-
-integral_test, x_in_test, y_in_test, x_out_test, y_out_test = monte_carlo_integration(test_function, a, b, n)
-integral_main, x_in_main, y_in_main, x_out_main, y_out_main = monte_carlo_integration(main_function, a, b, n)
+# Обчислення k-го члена ряду Фур'є
+def fourier_coefficient_k(k, x):
+    global num_mult, num_add
+    N = len(x)
+    n = np.arange(N)
+    c = np.exp(-2j * np.pi * k * n / N)
+    num_mult += 4 * N
+    num_add += N - 1
+    return np.dot(x, c)
 
 
-exact_value_test, abs_error_test, rel_error_test = errors(integral_test)
+# обчислення коефіцієнта Фур'є C_k
+def fourier_coefficient(k, x):
+    A_k = fourier_coefficient_k(k, x.real)
+    B_k = fourier_coefficient_k(k, x.imag)
+    return A_k + 1j * B_k
 
-print(f"Test integral: {integral_test}")
-print(f"Exact value: {exact_value_test}")
-print(f"Absolute error: {abs_error_test}")
-print(f"Relative error: {rel_error_test*100}")
 
-x = np.linspace(a,b , 100)
-y = test_function(x)
-plt.plot(x,y,color="black", linewidth=3)
-plt.scatter(x_in_test,y_in_test,color='green', alpha=0.5)
-plt.scatter(x_out_test,y_out_test,color='red', alpha=0.5)
-plt.title("Test Function")
+# Генерація довільного вектора f
+f = np.random.rand(N) + 1j * np.random.rand(N)
+
+# Обчислення коефіцієнтів Фур'є та часу обчислення
+start_time = time.time()
+C = [fourier_coefficient(k, f) for k in range(N)]
+end_time = time.time()
+elapsed_time = end_time - start_time
+print("\nЧас обчислення: ", elapsed_time)
+
+# Обчислення спектру амплітуд та фаз та побудова графіків
+amp_spectrum = np.abs(C)
+phase_spectrum = np.angle(C)
+freq_axis = np.arange(N)
+
+plt.figure(figsize=(12, 6))
+plt.subplot(1, 2, 1)
+plt.stem(freq_axis, amp_spectrum, 'blue')
+plt.title('Амплітудний спектр')
+plt.xlabel('Частота')
+plt.ylabel('Амплітуда')
+
+plt.subplot(1, 2, 2)
+plt.stem(freq_axis, phase_spectrum, 'blue')
+plt.title('Фазовий спектр')
+plt.xlabel('Частота')
+plt.ylabel('Фаза')
 plt.show()
 
-exact_value_main = quad(main_function,a,b)[0]
-abs_error_main = abs(integral_main - exact_value_main)
-rel_error_main = abs_error_main / exact_value_main
 
-print(f"Main integral: {integral_main}")
-print(f"Exact value: {exact_value_main}")
-print(f"Absolute error: {abs_error_main}")
-print(f"Relative error: {rel_error_main*100}")
+print("\nКількість операцій множення: ", num_mult)
+print("Кількість операцій додавання: ", num_add, "\n")
 
-x = np.linspace(a,b , 100)
-y = main_function(x)
-plt.plot(x,y,color="black", linewidth=3)
-plt.scatter(x_in_main,y_in_main,color='green', alpha=0.5)
-plt.scatter(x_out_main,y_out_main,color='red', alpha=0.5)
-plt.title("Main Function")
-plt.show()
+for i, c in enumerate(C):
+    print(f'C_{i} = {c}')
