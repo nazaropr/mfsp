@@ -2,13 +2,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import integrate
 from prettytable import PrettyTable
-import warnings
 
-warnings.filterwarnings("ignore")
-
-beginOfInterval = -np.pi
-endOfInterval = np.pi
-N = 50
+beginOfInterval = -3 * np.pi
+endOfInterval = 3 * np.pi
+N = 10
 
 
 def f(x):
@@ -119,7 +116,7 @@ def show_graphs():
 
 
 file_object = open("./result.txt", "w", encoding="utf-8")
-printToFile("Функція: 15 * sin(15 * pi * x), на проміжку х є [{}; {}]".format(beginOfInterval, endOfInterval), file_object)
+printToFile("Функція: 5 * sin(5 * pi * x), на проміжку х є [{}; {}]".format(beginOfInterval, endOfInterval), file_object)
 show_graphs()
 show_fourier_coefficients(file_object)
 file_object.close()
